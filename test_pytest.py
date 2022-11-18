@@ -2,15 +2,18 @@ import pytest
 from main import isBalanced
 
 FIXTURE = [
-    (r'(((([{}]))))', 'Сбалансированно'),
-    (r'[([])((([[[]]])))]{()}', 'Сбалансированно'),
-    (r'{{[()]}}', 'Сбалансированно'),
-    (r'}{}', 'Несбалансированно'),
-    (r'{{[(])]}}', 'Несбалансированно'),
-    (r'[[{())}]', 'Несбалансированно') 
+    ('(((([{}]))))', 'Сбалансированно'),
+    ('[([])((([[[]]])))]{()}', 'Сбалансированно'),
+    ('{{[()]}}', 'Сбалансированно'),
+    ('}{}', 'Несбалансированно'),
+    ('{{[(])]}}', 'Несбалансированно'),
+    ('[[{())}]', 'Несбалансированно'),
+    ('((1))', 'Неверная последовательность')
 ]
 
 @pytest.mark.parametrize('string, etalon', FIXTURE)
-def test_balance(string, etalon):
+def test_balance(string:str, etalon:str):
+    '''Checks if isBalanced function works properly'''
+    
     result = isBalanced(string)
     assert result == etalon
