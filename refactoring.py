@@ -4,48 +4,46 @@ import imaplib
 from email.MIMEText import MIMEText
 from email.MIMEMultipart import MIMEMultipart
 
-class EmailProcessor:
+class EmailProcessor():
     
-    def __init__(self) -> None:
+    def __init__(self, login, password) -> None:
         self.GMAIL_SMTP = "smtp.gmail.com"
         self.GMAIL_IMAP = "imap.gmail.com"
-        self.login = 'login@gmail.com'
-        self.password = 'qwerty'
-        self.subject = 'Subject'
-        self.recipients = ['vasya@email.com', 'petya@email.com']
-        self.message = 'Message'
-        self.header = None
+        self.login = login
+        self.password = password
 
-    def send_message(self, send_from:str, send_to:list, message_subject:str = None):
-        msg = MIMEMultipart()
-        msg['From'] = send_from
-        msg['To'] = ', '.join(send_to)
-        msg['Subject'] = message_subject
-        msg.attach(MIMEText(self.message))
-        ms = smtplib.SMTP(self.GMAIL_SMTP, 587)
-        ms.ehlo()
-        ms.starttls()
-        ms.ehlo()
-        ms.login(self.login, self.password)
-        ms.sendmail(self.login, ms, msg.as_string())
-        ms.quit()
+    def send_message(self, send_to:list, message_subject:str, message_text:str) -> None:
+        message = MIMEMultipart()
+        message['From'] = self.login
+        message['To'] = ', '.join(send_to)
+        message['Subject'] = message_subject
+        message.attach(MIMEText(message_text))
+        message_session = smtplib.SMTP(self.GMAIL_SMTP, 587)
+        message_session.ehlo()
+        message_session.starttls()
+        message_session.ehlo()
+        message_session.login(self.login, self.password)
+        message_session.sendmail(self.login, message_session, message_text.as_string())
+        message_session.quit()
 
-    def recieve_message(self, criterion, mail_folder='inbox'):     
-        mail = imaplib.IMAP4_SSL(self.GMAIL_IMAP)
-        mail.login(self.login, self.password)
-        mail.list()
-        mail.select(mail_folder)
-        criterion = f'(HEADER Subject "{self.header if self.header else "ALL"}")'
-        _, data = mail.uid('search', None, criterion)
+    def recieve_message(self, header=None, mail_folder='inbox'):     
+        mailbox = imaplib.IMAP4_SSL(self.GMAIL_IMAP)
+        mailbox.login(self.login, self.password)
+        mailbox.list()
+        mailbox.select(mail_folder)
+        _, message_data = mailbox.uid('search', None, f'(HEADER Subject "{header if header else "ALL"}")')
         try:
-            latest_email_uid = data[0].split()[-1]
+            latest_email_uid = message_data[0].split()[-1]
         except IndexError:
             return 'There are no letters with current header'
-        _, data = mail.uid('fetch', latest_email_uid, '(RFC822)')
-        raw_email = data[0][1]
+        _, message_data = mailbox.uid('fetch', latest_email_uid, '(RFC822)')
+        raw_email = message_data[0][1]
         email_message = email.message_from_string(raw_email)
-        mail.logout()
+        mailbox.logout()
         return email_message
 
 if __name__ == '__main__':
-    email_handler = EmailProcessor
+    recipients_list = ['vasya@email.com', 'petya@email.com']
+    my_email = EmailProcessor('login@gmail.com', 'qwerty')
+    my_email.send_message(send_to=recipients_list, message_subject='Very important message', message_text='test_message')
+    my_email.recieve_message()
